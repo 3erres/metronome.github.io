@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Metronome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados */
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        
+        .slider-thumb::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        
+        .beat-indicator {
+            transition: all 0.1s ease;
+        }
+        
+        .active-beat {
+            transform: scale(1.2);
+            background-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .pulse {
+            animation: pulse 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Metronome</h1>
+        
+        <!-- Display do BPM -->
+        <div class="flex justify-center items-center mb-8">
+            <button id="decrease-bpm" class="bg-gray-200 hover:bg-gray-300 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold mr-4">
+                -
+            </button>
+            <div class="text-center">
+                <div id="bpm-display" class="text-5xl font-bold text-gray-800">120</div>
+                <div class="text-gray-500">BPM</div>
+            </div>
+            <button id="increase-bpm" class="bg-gray-200 hover:bg-gray-300 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold ml-4">
+                +
+            </button>
+        </div>
+        
+        <!-- Controle de BPM -->
+        <div class="mb-8 text-center">
+            <label for="bpm-slider" class="block text-gray-700 mb-2">Tempo (40-208 BPM)</label>
+            <input type="range" id="bpm-slider" min="40" max="208" value="120" class="w-full slider-thumb">
+        </div>
+        
+        <!-- Seletor de Compasso -->
+        <div class="mb-8 text-center">
+            <label class="block text-gray-700 mb-2">Time Signature</label>
+            <div class="flex space-x-2 justify-center">
+                <button data-time="1" class="time-signature bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">1/4</button>
+                <button data-time="2" class="time-signature bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">2/4</button>
+                <button data-time="3" class="time-signature bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">3/4</button>
+                <button data-time="4" class="time-signature bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">4/4</button>
+                <button data-time="5" class="time-signature bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">5/4</button>
+            </div>
+        </div>
+        
+        <!-- Indicador de Batidas -->
+        <div class="flex justify-center mb-8 space-x-2" id="beat-indicators">
+            <div class="beat-indicator bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center font-bold">1</div>
+            <div class="beat-indicator bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center font-bold">2</div>
+            <div class="beat-indicator bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center font-bold">3</div>
+            <div class="beat-indicator bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center font-bold">4</div>
+        </div>
+        
+        <!-- Seletor de Som -->
+        <div class="mb-8 text-center">
+            <label class="block text-gray-700 mb-2">Click Sound</label>
+            <div class="flex space-x-2 justify-center">
+                <button data-sound="beep" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded active bg-blue-500 text-white">Beep</button>
+                <button data-sound="wood" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Wood</button>
+                <button data-sound="digital" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Digital</button>
+            </div>
+        </div>
+        
+        <!-- Controle de Volume -->
+        <div class="mb-8 text-center">
+            <label for="volume-slider" class="block text-gray-700 mb-2">Volume</label>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5" class="w-full slider-thumb">
+        </div>
+        
+        <!-- Botão de Play/Pause -->
+        <div class="flex justify-center">
+            <button id="toggle-metronome" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg flex items-center">
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="toggle-text">Start</span>
+            </button>
+        </div>
+        
+        <!-- Instruções do Teclado -->
+        <div class="mt-6 text-sm text-gray-500 text-center">
+            <p>Keys: ← → (change BPM), ↑ ↓ (volume), Space (play/pause)</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos do DOM
+            const bpmDisplay = document.getElementById('bpm-display');
+            const bpmSlider = document.getElementById('bpm-slider');
+            const decreaseBpmBtn = document.getElementById('decrease-bpm');
+            const increaseBpmBtn = document.getElementById('increase-bpm');
+            const timeSignatureBtns = document.querySelectorAll('.time-signature');
+            const soundOptions = document.querySelectorAll('.sound-option');
+            const volumeSlider = document.getElementById('volume-slider');
+            const toggleMetronomeBtn = document.getElementById('toggle-metronome');
+            const toggleText = document.getElementById('toggle-text');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const beatIndicatorsContainer = document.getElementById('beat-indicators');
+            
+            // Variáveis do metrônomo
+            let bpm = 120;
+            let timeSignature = 4;
+            let currentBeat = 0;
+            let isPlaying = false;
+            let timer = null;
+            let soundType = 'beep';
+            let volume = 0.5;
+            
+            // Sons do metrônomo
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let beepSound, woodSound, digitalSound;
+            
+            // Criar os sons
+            function createBeepSound(accent = false) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = accent ? 1000 : 800;
+                gainNode.gain.value = accent ? volume * 1.5 : volume;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + (accent ? 0.08 : 0.05));
+            }
+            
+            function createWoodSound(accent = false) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = accent ? 800 : 600;
+                gainNode.gain.value = accent ? volume * 1.5 : volume;
+                
+                // Aplicar um envelope para simular som de madeira
+                gainNode.gain.setValueAtTime(accent ? volume * 1.5 : volume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + (accent ? 0.15 : 0.1));
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + (accent ? 0.15 : 0.1));
+            }
+            
+            function createDigitalSound(accent = false) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.value = accent ? 1200 : 1000;
+                gainNode.gain.value = accent ? volume * 1.5 : volume;
+                
+                // Aplicar um envelope para simular som digital
+                gainNode.gain.setValueAtTime(accent ? volume * 1.5 : volume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + (accent ? 0.08 : 0.05));
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + (accent ? 0.08 : 0.05));
+            }
+            
+            // Atualizar indicadores de batida
+            function updateBeatIndicators() {
+                // Limpar indicadores existentes
+                beatIndicatorsContainer.innerHTML = '';
+                
+                // Criar novos indicadores baseados no compasso
+                for (let i = 0; i < timeSignature; i++) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'beat-indicator bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center font-bold text-blue-500';
+                    indicator.textContent = i + 1;
+                    beatIndicatorsContainer.appendChild(indicator);
+                }
+            }
+            
+            // Tocar o som do metrônomo
+            function playClick() {
+                // Destacar o indicador de batida atual
+                const indicators = document.querySelectorAll('.beat-indicator');
+                indicators.forEach(ind => ind.classList.remove('active-beat', 'pulse'));
+                
+                if (indicators[currentBeat]) {
+                    indicators[currentBeat].classList.add('active-beat', 'pulse');
+                }
+                
+                // Tocar o som baseado na seleção
+                const isAccent = currentBeat === 0;
+                switch(soundType) {
+                    case 'beep':
+                        createBeepSound(isAccent);
+                        break;
+                    case 'wood':
+                        createWoodSound(isAccent);
+                        break;
+                    case 'digital':
+                        createDigitalSound(isAccent);
+                        break;
+                }
+                
+                // Avançar para a próxima batida
+                currentBeat = (currentBeat + 1) % timeSignature;
+            }
+            
+            // Iniciar/parar o metrônomo
+            function toggleMetronome() {
+                if (isPlaying) {
+                    clearInterval(timer);
+                    isPlaying = false;
+                    toggleText.textContent = 'Start';
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                    
+                    // Resetar indicadores
+                    const indicators = document.querySelectorAll('.beat-indicator');
+                    indicators.forEach(ind => ind.classList.remove('active-beat', 'pulse'));
+                    currentBeat = 0;
+                } else {
+                    isPlaying = true;
+                    toggleText.textContent = 'Stop';
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                    
+                    // Calcular intervalo em milissegundos
+                    const interval = 60000 / bpm;
+                    
+                    // Iniciar o timer
+                    timer = setInterval(playClick, interval);
+                    
+                    // Tocar a primeira batida imediatamente
+                    playClick();
+                }
+            }
+            
+            // Atualizar BPM
+            function updateBpm(newBpm) {
+                bpm = newBpm;
+                bpmDisplay.textContent = bpm;
+                bpmSlider.value = bpm;
+                
+                // Se estiver tocando, reiniciar o timer com o novo BPM
+                if (isPlaying) {
+                    clearInterval(timer);
+                    const interval = 60000 / bpm;
+                    timer = setInterval(playClick, interval);
+                }
+            }
+            
+            // Event Listeners
+            bpmSlider.addEventListener('input', function() {
+                updateBpm(parseInt(this.value));
+            });
+            
+            decreaseBpmBtn.addEventListener('click', function() {
+                const newBpm = Math.max(40, bpm - 1);
+                updateBpm(newBpm);
+            });
+            
+            increaseBpmBtn.addEventListener('click', function() {
+                const newBpm = Math.min(208, bpm + 1);
+                updateBpm(newBpm);
+            });
+            
+            timeSignatureBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remover classe 'active' de todos os botões
+                    timeSignatureBtns.forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white');
+                        b.classList.add('bg-gray-200');
+                    });
+                    
+                    // Adicionar classes de destaque ao botão clicado
+                    this.classList.remove('bg-gray-200');
+                    this.classList.add('bg-blue-500', 'text-white');
+                    
+                    // Atualizar compasso
+                    timeSignature = parseInt(this.dataset.time);
+                    
+                    // Atualizar indicadores de batida
+                    updateBeatIndicators();
+                    
+                    // Resetar contador de batidas
+                    currentBeat = 0;
+                });
+            });
+            
+            soundOptions.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remover classe 'active' de todos os botões
+                    soundOptions.forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white');
+                        b.classList.add('bg-gray-200');
+                    });
+                    
+                    // Adicionar classes de destaque ao botão clicado
+                    this.classList.remove('bg-gray-200');
+                    this.classList.add('bg-blue-500', 'text-white');
+                    
+                    // Atualizar tipo de som
+                    soundType = this.dataset.sound;
+                });
+            });
+            
+            volumeSlider.addEventListener('input', function() {
+                volume = parseFloat(this.value);
+            });
+            
+            toggleMetronomeBtn.addEventListener('click', toggleMetronome);
+            
+            // Controles do teclado
+            document.addEventListener('keydown', function(e) {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                        // Diminuir BPM em 10
+                        e.preventDefault();
+                        const newBpmLeft = Math.max(40, bpm - 10);
+                        updateBpm(newBpmLeft);
+                        break;
+                    case 'ArrowRight':
+                        // Aumentar BPM em 10
+                        e.preventDefault();
+                        const newBpmRight = Math.min(208, bpm + 10);
+                        updateBpm(newBpmRight);
+                        break;
+                    case 'ArrowUp':
+                        // Aumentar volume
+                        e.preventDefault();
+                        volumeSlider.value = Math.min(1, parseFloat(volumeSlider.value) + 0.1).toFixed(2);
+                        volumeSlider.dispatchEvent(new Event('input'));
+                        break;
+                    case 'ArrowDown':
+                        // Diminuir volume
+                        e.preventDefault();
+                        volumeSlider.value = Math.max(0, parseFloat(volumeSlider.value) - 0.1).toFixed(2);
+                        volumeSlider.dispatchEvent(new Event('input'));
+                        break;
+                    case ' ':
+                        // Play/Pause
+                        e.preventDefault();
+                        toggleMetronome();
+                        break;
+                }
+            });
+            
+            // Inicializar
+            updateBeatIndicators();
+            // Selecionar padrões iniciais
+            document.querySelector('[data-time="4"]').classList.remove('bg-gray-200');
+            document.querySelector('[data-time="4"]').classList.add('bg-blue-500', 'text-white');
+            document.querySelector('[data-sound="beep"]').classList.remove('bg-gray-200');
+            document.querySelector('[data-sound="beep"]').classList.add('bg-blue-500', 'text-white');
+        });
+    </script>
+</body>
+</html>
