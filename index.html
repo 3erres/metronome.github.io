@@ -56,7 +56,8 @@
                 -
             </button>
             <div class="text-center">
-                <div id="bpm-display" class="text-5xl font-bold text-gray-800">120</div>
+                <input type="number" id="bpm-input" min="40" max="208" value="120" 
+                       class="text-5xl font-bold text-gray-800 bg-transparent border-none w-24 text-center focus:outline-none">
                 <div class="text-gray-500">BPM</div>
             </div>
             <button id="increase-bpm" class="bg-gray-200 hover:bg-gray-300 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold ml-4">
@@ -129,7 +130,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Elementos do DOM
-            const bpmDisplay = document.getElementById('bpm-display');
+            const bpmInput = document.getElementById('bpm-input');
             const bpmSlider = document.getElementById('bpm-slider');
             const decreaseBpmBtn = document.getElementById('decrease-bpm');
             const increaseBpmBtn = document.getElementById('increase-bpm');
@@ -284,7 +285,7 @@
             // Atualizar BPM
             function updateBpm(newBpm) {
                 bpm = newBpm;
-                bpmDisplay.textContent = bpm;
+                bpmInput.value = bpm;
                 bpmSlider.value = bpm;
                 
                 // Se estiver tocando, reiniciar o timer com o novo BPM
@@ -391,6 +392,15 @@
                 }
             });
             
+            // Input field for direct BPM entry
+            bpmInput.addEventListener('change', function() {
+                let newBpm = parseInt(this.value);
+                if (isNaN(newBpm) || newBpm < 40) newBpm = 40;
+                if (newBpm > 208) newBpm = 208;
+                updateBpm(newBpm);
+                this.value = newBpm;
+            });
+
             // Inicializar
             updateBeatIndicators();
             // Selecionar padrões iniciais
