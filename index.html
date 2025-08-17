@@ -26,12 +26,14 @@
         }
         
         .beat-indicator {
-            transition: color 0.1s ease;
+            transition: all 0.1s ease;
             color: #000000;
+            background-color: #e5e7eb;
         }
         
         .active-beat {
-            color: #3b82f6;
+            color: white !important;
+            background-color: #3b82f6 !important;
         }
     </style>
 </head>
@@ -252,7 +254,7 @@
                     
                     // Resetar indicadores
                     const indicators = document.querySelectorAll('.beat-indicator');
-                    indicators.forEach(ind => ind.classList.remove('active-beat', 'pulse'));
+                    indicators.forEach(ind => ind.classList.remove('active-beat'));
                     currentBeat = 0;  // Reset to first beat
                 } else {
                     isPlaying = true;
