@@ -7,6 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Estilos personalizados */
+        .slider-thumb {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: transparent;
+            border-radius: 4px;
+            outline: none;
+        }
+        
         .slider-thumb::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -15,6 +26,28 @@
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
+            margin-top: -8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .slider-thumb {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+        }
+
+        .slider-thumb::-webkit-slider-runnable-track {
+            -webkit-appearance: none;
+            height: 8px;
+            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 var(--progress, 50%), #e5e7eb var(--progress, 50%), #e5e7eb 100%);
+            border-radius: 4px;
+        }
+
+        .slider-thumb::-moz-range-track {
+            height: 8px;
+            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 var(--progress, 50%), #e5e7eb var(--progress, 50%), #e5e7eb 100%);
+            border-radius: 4px;
         }
         
         .slider-thumb::-moz-range-thumb {
@@ -23,6 +56,19 @@
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
+            border: none;
+        }
+        
+        .slider-thumb::-moz-range-progress {
+            background: #3b82f6;
+            height: 8px;
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .slider-thumb::-webkit-slider-container {
+            height: 8px;
+            display: flex;
+            align-items: center;
         }
         
         .beat-indicator {
@@ -47,8 +93,8 @@
                 -
             </button>
             <div class="text-center">
-                <input type="number" id="bpm-input" min="40" max="208" value="120" 
-                       class="text-5xl font-bold text-gray-800 bg-transparent border-none w-24 text-center focus:outline-none">
+                <input type="number" id="bpm-input" min="40" max="240" value="120" 
+                       class="text-5xl font-bold text-gray-800 bg-transparent border-none w-24 text-center focus:outline-none" style="-moz-appearance: textfield;">
                 <div class="text-gray-500">BPM</div>
             </div>
             <button id="increase-bpm" class="bg-gray-200 hover:bg-gray-300 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold ml-4">
@@ -58,8 +104,8 @@
         
         <!-- Controle de BPM -->
         <div class="mb-8 text-center">
-            <label for="bpm-slider" class="block text-gray-700 mb-2">Tempo (40-208 BPM)</label>
-            <input type="range" id="bpm-slider" min="40" max="208" value="120" class="w-full slider-thumb">
+            <label for="bpm-slider" class="block text-gray-700 mb-2">Tempo (40-240 BPM)</label>
+            <input type="range" id="bpm-slider" min="40" max="240" value="120" class="w-full slider-thumb">
         </div>
         
         <!-- Seletor de Compasso -->
@@ -86,9 +132,9 @@
         <div class="mb-8 text-center">
             <label class="block text-gray-700 mb-2">Click Sound</label>
             <div class="flex space-x-2 justify-center">
-                <button data-sound="beep" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded active bg-blue-500 text-white">Beep</button>
-                <button data-sound="wood" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Wood</button>
-                <button data-sound="digital" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Digital</button>
+                <button data-sound="beep" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded active bg-blue-500 text-white">Beep (B)</button>
+                <button data-sound="wood" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Wood (W)</button>
+                <button data-sound="digital" class="sound-option bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">Digital (D)</button>
             </div>
         </div>
         
@@ -114,7 +160,7 @@
         
         <!-- Instruções do Teclado -->
         <div class="mt-6 text-sm text-gray-500 text-center">
-            <p>Keys: ← → (change BPM), ↑ ↓ (volume), Space (play/pause)</p>
+            <p>Keys: ← → (BPM), ↑ ↓ (volume), Space (play/pause), 1-5 (time signature), B/W/D (sound)</p>
         </div>
     </div>
 
@@ -278,6 +324,7 @@
                 bpm = newBpm;
                 bpmInput.value = bpm;
                 bpmSlider.value = bpm;
+                updateSliderProgress(bpmSlider);
                 
                 // Se estiver tocando, reiniciar o timer com o novo BPM
                 if (isPlaying) {
@@ -298,7 +345,7 @@
             });
             
             increaseBpmBtn.addEventListener('click', function() {
-                const newBpm = Math.min(208, bpm + 1);
+                const newBpm = Math.min(240, bpm + 1);
                 updateBpm(newBpm);
             });
             
@@ -342,8 +389,23 @@
                 });
             });
             
-            volumeSlider.addEventListener('input', function() {
-                volume = parseFloat(this.value);
+            function updateSliderProgress(slider) {
+                const value = slider.value;
+                const min = slider.min || 0;
+                const max = slider.max || 100;
+                const percent = ((value - min) / (max - min)) * 100;
+                slider.style.setProperty('--progress', `${percent}%`);
+            }
+
+            // Update sliders on input
+            [bpmSlider, volumeSlider].forEach(slider => {
+                updateSliderProgress(slider);
+                slider.addEventListener('input', function() {
+                    updateSliderProgress(this);
+                    if (this === volumeSlider) {
+                        volume = parseFloat(this.value);
+                    }
+                });
             });
             
             toggleMetronomeBtn.addEventListener('click', toggleMetronome);
@@ -356,12 +418,14 @@
                         e.preventDefault();
                         const newBpmLeft = Math.max(40, bpm - 10);
                         updateBpm(newBpmLeft);
+                        updateSliderProgress(bpmSlider);
                         break;
                     case 'ArrowRight':
                         // Aumentar BPM em 10
                         e.preventDefault();
-                        const newBpmRight = Math.min(208, bpm + 10);
+                        const newBpmRight = Math.min(240, bpm + 10);
                         updateBpm(newBpmRight);
+                        updateSliderProgress(bpmSlider);
                         break;
                     case 'ArrowUp':
                         // Aumentar volume
@@ -380,6 +444,49 @@
                         e.preventDefault();
                         toggleMetronome();
                         break;
+                    case '1':
+                        // Selecionar compasso 1/4
+                        e.preventDefault();
+                        document.querySelector('[data-time="1"]').click();
+                        break;
+                    case '2':
+                        // Selecionar compasso 2/4
+                        e.preventDefault();
+                        document.querySelector('[data-time="2"]').click();
+                        break;
+                    case '3':
+                        // Selecionar compasso 3/4
+                        e.preventDefault();
+                        document.querySelector('[data-time="3"]').click();
+                        break;
+                    case '4':
+                        // Selecionar compasso 4/4
+                        e.preventDefault();
+                        document.querySelector('[data-time="4"]').click();
+                        break;
+                    case '5':
+                        // Selecionar compasso 5/4
+                        e.preventDefault();
+                        document.querySelector('[data-time="5"]').click();
+                        break;
+                    case 'b':
+                    case 'B':
+                        // Selecionar som Beep
+                        e.preventDefault();
+                        document.querySelector('[data-sound="beep"]').click();
+                        break;
+                    case 'w':
+                    case 'W':
+                        // Selecionar som Wood
+                        e.preventDefault();
+                        document.querySelector('[data-sound="wood"]').click();
+                        break;
+                    case 'd':
+                    case 'D':
+                        // Selecionar som Digital
+                        e.preventDefault();
+                        document.querySelector('[data-sound="digital"]').click();
+                        break;
                 }
             });
             
@@ -387,7 +494,7 @@
             bpmInput.addEventListener('change', function() {
                 let newBpm = parseInt(this.value);
                 if (isNaN(newBpm) || newBpm < 40) newBpm = 40;
-                if (newBpm > 208) newBpm = 208;
+                if (newBpm > 240) newBpm = 240;
                 updateBpm(newBpm);
                 this.value = newBpm;
             });
