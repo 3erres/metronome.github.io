@@ -160,7 +160,7 @@
         
         <!-- Instruções do Teclado -->
         <div class="mt-6 text-sm text-gray-500 text-center">
-            <p>Keys: ← → (BPM), ↑ ↓ (volume), Space (play/pause), 1-5 (time signature), B/W/D (sound)</p>
+            <p>Keys: ← → (BPM ±10), + - (BPM ±1), ↑ ↓ (volume), Space (play/pause), 1-5 (time signature), B/W/D (sound)</p>
         </div>
     </div>
 
@@ -486,6 +486,20 @@
                         // Selecionar som Digital
                         e.preventDefault();
                         document.querySelector('[data-sound="digital"]').click();
+                        break;
+                    case '+':
+                        // Aumentar BPM em 1
+                        e.preventDefault();
+                        const newBpmPlus = Math.min(240, bpm + 1);
+                        updateBpm(newBpmPlus);
+                        updateSliderProgress(bpmSlider);
+                        break;
+                    case '-':
+                        // Diminuir BPM em 1
+                        e.preventDefault();
+                        const newBpmMinus = Math.max(40, bpm - 1);
+                        updateBpm(newBpmMinus);
+                        updateSliderProgress(bpmSlider);
                         break;
                 }
             });
